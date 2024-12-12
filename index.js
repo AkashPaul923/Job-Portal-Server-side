@@ -1,7 +1,7 @@
 require('dotenv').config()
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT ||5000;
 app.use(cors());
@@ -24,12 +24,30 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+    const jobCollection = client.db('JobPortal').collection('Jobs')
+
+    // job APIs
+    app.get('/jobs', async (req,res)=>{
+        const cursor = jobCollection.find()
+        const result = await cursor.toArray()
+        res.send(result)
+    })
+
+    app.get('/jobs/:id', async (req,res)=>{
+        const id = req.params.id
+        const query = {_id : new ObjectId(id)}
+        const result = await jobCollection.findOne(query)
+        res.send(result)
+    })
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
