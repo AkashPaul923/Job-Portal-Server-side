@@ -51,6 +51,25 @@ async function run() {
     })
 
 
+    app.get('/job-applications/:email', async (req, res) =>{
+      const email = req.params.email
+      // console.log(email);
+      const query = { applicant_email : email }
+      const result = await jobApplicationCollection.find(query).toArray()
+      for(const application of result){
+        const query1 = { _id : new ObjectId(application.job_id) }
+        const job = await jobCollection.findOne(query1)
+        if(job){
+          application.title = job.title
+          application.location = job.location
+          application.company = job.company
+          application.company_logo = job.company_logo
+        }
+      }
+      res.send(result)
+    })
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
