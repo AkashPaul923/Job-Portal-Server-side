@@ -7,11 +7,27 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const req = require('express/lib/request');
 const app = express();
 const port = process.env.PORT ||5000;
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173'],
+  credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser())
 
+const verifyToken = (req, res, next)=>{
+  const token = req?.cookies?.token
 
+  if(!token){
+    return res.status(401).send({message: 'Unauthorized Access'})
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded)=>{
+    if(err){
+      return res.status(401).send({message: 'Unauthorized Access'})
+    }
+    res.user = decoded
+    next()
+  })
+}
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.xlwti.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -35,7 +51,7 @@ async function run() {
     // Auth APIs
     app.post('/jwt', async (req, res)=>{
       const user = req.body
-      const token = jwt.sign(user, process.env.JWT_SECRET, {expiresIn: '1h'})
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
       res.cookie('token', token, {
         httpOnly:true,
         secure: false, 
@@ -72,9 +88,17 @@ async function run() {
     })
 
 
-    app.get('/job-applications/:email', async (req, res) =>{
+    app.get('/job-applications/:email', verifyToken, async (req, res) =>{
       const email = req.params.email
       // console.log(email);
+      console.log(req.cookies);
+
+      if(req.user.email !== req.params.email){
+        return res.status(403).send({message: 'Forbidden Access'})
+      }
+
+
+
       const query = { applicant_email : email }
       const result = await jobApplicationCollection.find(query).toArray()
       for(const application of result){
