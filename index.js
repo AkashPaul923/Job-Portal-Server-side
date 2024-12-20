@@ -58,6 +58,14 @@ async function run() {
       }).send({success: true})
     })
 
+    app.post('/logout', (req,res)=>{
+      res.clearCookie('token',{
+        httpOnly: true,
+        secure: false
+      })
+      .send({success: true})
+    })
+
     // job APIs
     app.get('/jobs', async (req,res)=>{
         const cursor = jobCollection.find()
