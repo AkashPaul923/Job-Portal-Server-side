@@ -15,7 +15,7 @@ app.use(express.json());
 app.use(cookieParser())
 
 const verifyToken = (req, res, next)=>{
-  const token = req?.cookies?.token
+  const token =  req.cookies.token
 
   if(!token){
     return res.status(401).send({message: 'Unauthorized Access'})
@@ -24,7 +24,9 @@ const verifyToken = (req, res, next)=>{
     if(err){
       return res.status(401).send({message: 'Unauthorized Access'})
     }
-    res.user = decoded
+    req.user = decoded
+    // console.log("decoded", decoded);
+    // console.log(re);
     next()
   })
 }
@@ -99,9 +101,9 @@ async function run() {
     app.get('/job-applications/:email', verifyToken, async (req, res) =>{
       const email = req.params.email
       // console.log(email);
-      console.log(req.cookies);
+      // console.log(req.user?.email);
 
-      if(req.user.email !== req.params.email){
+      if(req.user.email !== email){
         return res.status(403).send({message: 'Forbidden Access'})
       }
 
